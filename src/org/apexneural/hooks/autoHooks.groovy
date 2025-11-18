@@ -1,11 +1,13 @@
+package org.apexneural.hooks
+
 import hudson.Extension
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionListener
 import org.jenkinsci.plugins.workflow.flow.FlowExecution
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import groovy.time.TimeCategory
 
-@Extension   // 🔥 REQUIRED: registers this as a Jenkins listener
-class autoHooks extends FlowExecutionListener {
+@Extension
+class AutoHooks extends FlowExecutionListener {
 
     @Override
     void onRunning(FlowExecution execution) {
@@ -23,7 +25,7 @@ class autoHooks extends FlowExecutionListener {
 🏗 *Build:* #${buildNumber}
 👤 *Triggered by:* ${startedBy}
 ⏱ *Time:* ${new Date().format("hh:mm a")}
-        """)
+        """.stripIndent())
     }
 
     @Override
@@ -43,7 +45,7 @@ class autoHooks extends FlowExecutionListener {
 🔧 *Job:* ${jobName}
 🏗 *Build:* #${buildNumber}
 ⏱ *Duration:* ${duration}
-            """)
+            """.stripIndent())
         } else {
             globalSlackNotifier.sendMessage("""
 🔴 *Build Failed*
@@ -52,14 +54,14 @@ class autoHooks extends FlowExecutionListener {
 🏗 *Build:* #${buildNumber}
 ⏱ *Duration:* ${duration}
 📄 *Logs:* <${run.absoluteUrl}console>
-            """)
+            """.stripIndent())
         }
     }
 
     private WorkflowRun getRun(FlowExecution execution) {
         try {
-            return execution.owner.executable
-        } catch(Exception ignored) {
+            return execution.getOwner().getExecutable()
+        } catch(Exception ignore) {
             return null
         }
     }
