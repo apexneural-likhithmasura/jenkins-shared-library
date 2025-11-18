@@ -1,15 +1,16 @@
+import hudson.Extension
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionListener
 import org.jenkinsci.plugins.workflow.flow.FlowExecution
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
-import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import groovy.time.TimeCategory
 
+@Extension   // 🔥 REQUIRED: registers this as a Jenkins listener
 class autoHooks extends FlowExecutionListener {
 
     @Override
     void onRunning(FlowExecution execution) {
         WorkflowRun run = getRun(execution)
-        if (run == null) return
+        if (!run) return
 
         def jobName = run.parent.displayName
         def buildNumber = run.number
@@ -28,15 +29,12 @@ class autoHooks extends FlowExecutionListener {
     @Override
     void onCompleted(FlowExecution execution) {
         WorkflowRun run = getRun(execution)
-        if (run == null) return
+        if (!run) return
 
         def result = run.result?.toString() ?: "UNKNOWN"
         def jobName = run.parent.displayName
         def buildNumber = run.number
-        def durationMs = run.duration
-
-        // Convert duration
-        String duration = TimeCategory.minus(new Date(durationMs), new Date(0)).toString()
+        def duration = TimeCategory.minus(new Date(run.duration), new Date(0)).toString()
 
         if (result == "SUCCESS") {
             globalSlackNotifier.sendMessage("""
@@ -60,8 +58,8 @@ class autoHooks extends FlowExecutionListener {
 
     private WorkflowRun getRun(FlowExecution execution) {
         try {
-            return execution.getOwner().getExecutable()
-        } catch (Exception ignored) {
+            return execution.owner.executable
+        } catch(Exception ignored) {
             return null
         }
     }
